@@ -1,13 +1,13 @@
-.helloCSS {
-    display: none;
-}
+/*
+ Some simple jquery type test
 
+*/
+$(document).ready(function(){
 
+    $('#something').html('asdfafsd');
 
+    $.getJSON('/url', function(data){
+        $('#something').html(data);
+    });
 
-
-#somecss {
-    color: #ffffff;
-    background: url('/images/whatever.gif');
-}
-
+});

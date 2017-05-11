@@ -1,7 +1,16 @@
-.helloCSS {
-    display: none;
+
+/**
+ Javascript test
+ */
+var x = 13;
+
+function test(i, j, x)
+{
+    var output = i + j + x;
+
+    return output;
 }
 
-
-
-
+//Run the function in the alert
+var detail = test(1, 2, 3);
+alert(detail);

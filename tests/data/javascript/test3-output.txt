@@ -1,1 +1,1 @@
-i->thing{something:true}
+$(function(){console.log( "ready!" );});

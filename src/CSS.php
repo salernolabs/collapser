@@ -61,6 +61,11 @@ class CSS extends Media
      */
     protected function handleCharacter32()
     {
+        if (!$this->inSingleQuotes && !$this->inQuotes)
+        {
+            return false;
+        }
+
         return true;
     }
 }

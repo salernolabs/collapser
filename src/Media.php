@@ -176,7 +176,7 @@ class Media
         $initialSize = mb_strlen($input);
         $timeStart = microtime(true);
 
-        $this->input = str_replace(array("\r", "\t"), array('', ' '), $input);
+        $this->input = str_replace(array("\r", "\t"), array('', ' '), trim($input));
         unset($input);
 
         if (empty($this->input))
@@ -188,33 +188,38 @@ class Media
 
         $output = '';
 
-        for ($i = 0; $i < $characterCount; ++$i) {
+        for ($i = 0; $i < $characterCount; ++$i)
+        {
             if (!empty($this->skipNext)) {
                 $this->skipNext--;
                 continue;
             }
 
             $this->currentIndex = $i;
-            $character = $this->input[$i];
+            $character = mb_substr($this->input, $i, 1);
             $this->currentCharacter = ord($character);
-            $this->nextCharacter = !empty($this->input[$i + 1]) ? ord($this->input[$i + 1]) : false;
-            $this->lastCharacter = !empty($this->input[$i - 1]) ? ord($this->input[$i - 1]) : false;
-
-            $return = false;
+            $this->nextCharacter = ($this->currentIndex != $characterCount) ? ord(mb_substr($this->input, $i + 1, 1)) : false;
+            $this->lastCharacter = ($this->currentIndex != 0) ? ord(mb_substr($this->input, $i - 1, 1)) : false;
 
             $methodName = 'handleCharacter' . $this->currentCharacter;
 
-            if (method_exists($this, $methodName)) {
+            if (method_exists($this, $methodName))
+            {
                 $return = $this->$methodName();
-            } else {
+            }
+            else
+            {
                 $return = $this->handleCharacter();
             }
 
-            if ($return === false) {
+            if ($return === false)
+            {
                 $this->lastWord = $this->buildingWord;
                 $this->buildWord = '';
                 continue;
-            } else if ($return === true) {
+            }
+            else if ($return === true)
+            {
                 $output .= $character;
                 $this->lastAdded = $this->currentCharacter;
 
@@ -224,7 +229,9 @@ class Media
                     $this->lastWord = $this->buildingWord;
                     $this->buildingWord = '';
                 }
-            } else if (is_string($return)) {
+            }
+            else if (is_string($return))
+            {
                 $output .= $return;
                 $this->lastAdded = ord($output[mb_strlen($output) - 1]);
 
@@ -252,9 +259,14 @@ class Media
         if ($this->inQuotes || $this->inSingleQuotes) return true;
 
         //We're in a // style comment, delete it regardless
-        if ($this->nextCharacter == 47) 
+        if ($this->nextCharacter == 47)
         {
             $nextNewLine = mb_strpos($this->input, "\n", $this->currentIndex);
+            if ($nextNewLine === false)
+            {
+                //This means the comment goes to the end of the file
+                $nextNewLine = mb_strlen($this->input);
+            }
 
             $comment = mb_substr($this->input, $this->currentIndex, $nextNewLine - $this->currentIndex);
 
@@ -269,7 +281,7 @@ class Media
                 throw new \Exception("Unclosed comment in media near index " . $this->currentIndex);
             }
 
-            $comment = mb_substr($this->input, $this->currentIndex, $nextClosing);
+            $comment = mb_substr($this->input, $this->currentIndex, $nextClosing + 1);
 
             $this->skipNext = mb_strlen($comment);
 

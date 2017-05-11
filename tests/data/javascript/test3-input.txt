@@ -1,3 +1,4 @@
-
-i->thing { something: true    }
-//whatever!!!
+// Shorthand for $( document ).ready()
+$(function() {
+    console.log( "ready!" );
+});

@@ -1,1 +1,1 @@
-.helloCSS{display:none;}#somecss{color:#ffffff;background:url('/images/whatever.gif');}
+$(document).ready(function(){$('#something').html('asdfafsd');$.getJSON('/url', function(data){$('#something').html(data);});});
