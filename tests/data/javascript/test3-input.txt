@@ -1,0 +1,3 @@
+
+i->thing { something: true    }
+//whatever!!!

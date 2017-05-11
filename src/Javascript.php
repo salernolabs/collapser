@@ -97,7 +97,7 @@ class Javascript extends Media
             return true;
         }
 
-        if ((chr($this->nextCharacter) . $this->inputs[$this->currentIndex + 2]) == 'in') {
+        if ((chr($this->nextCharacter) . $this->input[$this->currentIndex + 2]) == 'in') {
             return true;
         }
 

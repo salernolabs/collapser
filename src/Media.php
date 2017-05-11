@@ -76,7 +76,7 @@ class Media
     /**
      * Preserve new lines
      *
-     * @var unknown
+     * @var boolean
      */
     protected $preserveNewlines = false;
 
@@ -116,40 +116,10 @@ class Media
     protected $buildingWord = '';
 
     /**
-     * Static wrapper for minifying media
-     *
-     * @param string $input
-     * @param boolean $deleteComments
-     * @param boolean $preserveNewlines
-     * @param boolean $debugMode
-     *
-     * @return string
-     */
-    public static function minifyMedia($input, $deleteComments = true, $preserveNewlines = false, $debugMode = false)
-    {
-        try {
-            $class = get_called_class();
-
-            $collapser = new $class();
-
-            $collapser
-                ->setPreserveNewLines($preserveNewlines)
-                ->setDeleteComments($deleteComments)
-                ->setDebugMode($debugMode);
-
-            return $collapser->collapseMedia($input);
-        } catch (\Chorizo\Exceptions\Exception $exception) {
-            static::getSystemStatic()->log->exception("Failed to collapse media properly.", $exception);
-        }
-
-        return false;
-    }
-
-    /**
      * Should the collapser preserve new lines or not
      *
      * @param boolean $value
-     * @return \Chorizo\Utilities\Collapser\Media
+     * @return Media
      */
     public function setPreserveNewLines($value)
     {
@@ -162,7 +132,7 @@ class Media
      * Should the collapser delete multi-line comments or not?
      *
      * @param boolean $value
-     * @return \Chorizo\Utilities\Collapser\Media
+     * @return Media
      */
     public function setDeleteComments($value)
     {
@@ -175,7 +145,7 @@ class Media
      * Should the collapser include debug stats in the output
      *
      * @param boolean $value
-     * @return \Chorizo\Utilities\Collapser\Media
+     * @return Media
      */
     public function setDebugMode($value)
     {
@@ -190,8 +160,9 @@ class Media
      * @param string $input
      *
      * @return string
+     * @throws \Exception
      */
-    public function collapseMedia($input)
+    public function collapse($input)
     {
         $this->inQuotes = false;
         $this->inSingleQuotes = false;
@@ -205,14 +176,15 @@ class Media
         $initialSize = mb_strlen($input);
         $timeStart = microtime(true);
 
-        $this->inputs = str_replace(array("\r", "\t"), array('', ' '), $input);
+        $this->input = str_replace(array("\r", "\t"), array('', ' '), $input);
         unset($input);
 
-        if (empty($this->inputs)) {
-            throw new \Chorizo\Exceptions\Exception("No data has been supplied to media collapser.");
+        if (empty($this->input))
+        {
+            throw new \Exception("No data has been supplied to media collapser.");
         }
 
-        $characterCount = mb_strlen($this->inputs);
+        $characterCount = mb_strlen($this->input);
 
         $output = '';
 
@@ -223,10 +195,10 @@ class Media
             }
 
             $this->currentIndex = $i;
-            $character = $this->inputs[$i];
+            $character = $this->input[$i];
             $this->currentCharacter = ord($character);
-            $this->nextCharacter = !empty($this->inputs[$i + 1]) ? ord($this->inputs[$i + 1]) : false;
-            $this->lastCharacter = !empty($this->inputs[$i - 1]) ? ord($this->inputs[$i - 1]) : false;
+            $this->nextCharacter = !empty($this->input[$i + 1]) ? ord($this->input[$i + 1]) : false;
+            $this->lastCharacter = !empty($this->input[$i - 1]) ? ord($this->input[$i - 1]) : false;
 
             $return = false;
 
@@ -280,21 +252,24 @@ class Media
         if ($this->inQuotes || $this->inSingleQuotes) return true;
 
         //We're in a // style comment, delete it regardless
-        if ($this->nextCharacter == 47) {
-            $nextNewLine = mb_strpos($this->inputs, "\n", $this->currentIndex);
+        if ($this->nextCharacter == 47) 
+        {
+            $nextNewLine = mb_strpos($this->input, "\n", $this->currentIndex);
 
-            $comment = mb_substr($this->inputs, $this->currentIndex, $nextNewLine - $this->currentIndex);
+            $comment = mb_substr($this->input, $this->currentIndex, $nextNewLine - $this->currentIndex);
 
             $this->skipNext = mb_strlen($comment);
             return false;
-        } else if ($this->nextCharacter == 42) {
-            $nextClosing = mb_strpos($this->inputs, "*/", $this->currentIndex);
+        } 
+        else if ($this->nextCharacter == 42) 
+        {
+            $nextClosing = mb_strpos($this->input, "*/", $this->currentIndex);
 
             if ($nextClosing === false) {
-                throw new \Chorizo\Exceptions\Exception("Unclosed comment in media near index " . $this->currentIndex);
+                throw new \Exception("Unclosed comment in media near index " . $this->currentIndex);
             }
 
-            $comment = mb_substr($this->inputs, $this->currentIndex, $nextClosing);
+            $comment = mb_substr($this->input, $this->currentIndex, $nextClosing);
 
             $this->skipNext = mb_strlen($comment);
 

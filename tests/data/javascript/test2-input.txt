@@ -1,0 +1,13 @@
+.helloCSS {
+    display: none;
+}
+
+
+
+
+
+#somecss {
+    color: #ffffff;
+    background: url('/images/whatever.gif');
+}
+

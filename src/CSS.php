@@ -1,6 +1,6 @@
 <?php
 /**
- * Javascript Collapser class
+ * CSS Collapser class
  *
  * @author Eric
  * @package SalernoLabs
@@ -36,7 +36,8 @@ class CSS extends Media
      */
     protected function handleCharacter59()
     {
-        if (!$this->inSingleQuotes && !$this->inQuotes) {
+        if (!$this->inSingleQuotes && !$this->inQuotes)
+        {
             $this->inRule = false;
         }
 
