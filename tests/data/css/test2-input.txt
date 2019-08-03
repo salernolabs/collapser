@@ -8,6 +8,6 @@
 
 #somecss {
     color: #ffffff;
-    background: url('/images/whatever.gif');
+    background: url('/images/whatever.gif ');
 }
 

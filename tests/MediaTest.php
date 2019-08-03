@@ -1,4 +1,8 @@
 <?php
+namespace SalernoLabs\Tests\Collapser;
+
+use SalernoLabs\Collapser\Media;
+
 /**
  * Test cases for Media class
  *
@@ -6,8 +10,6 @@
  * @subpackage Collapser
  * @author Eric
  */
-namespace SalernoLabs\Tests\Collapser;
-
 class MediaTest extends \PHPUnit\Framework\TestCase
 {
     /**
@@ -16,10 +18,11 @@ class MediaTest extends \PHPUnit\Framework\TestCase
      * @param $input
      * @param $expected
      * @dataProvider dataProviderTestCollapse
+     * @throws \Exception But not in this test
      */
     public function testCollapse($input, $expected)
     {
-        $collapser = new \SalernoLabs\Collapser\Media();
+        $collapser = new Media();
 
         $output = $collapser->collapse($input);
 
@@ -47,5 +50,60 @@ class MediaTest extends \PHPUnit\Framework\TestCase
         }
 
         return $output;
+    }
+
+    /**
+     * Test debug mode
+     * @throws \Exception
+     */
+    public function testDebugMode()
+    {
+        $collapser = new Media();
+        $collapser
+            ->setDebugMode(true);
+
+        $output = $collapser->collapse('test{ blargh: true   }');
+
+        $this->assertRegExp('#\/\* culled 5 chars in [0-9.]+#', $output);
+    }
+
+    /**
+     * Test unclosed comment
+     * @throws \Exception On invalid input
+     */
+    public function testUnclosedComment()
+    {
+        $this->expectException(\Exception::class);
+        $collapser = new Media();
+        $collapser->collapse('var l = 4 / 1; /* hello');
+    }
+
+    /**
+     * @throws \Exception On invalid input
+     */
+    public function testPreserveNewLines()
+    {
+        $collapser = new Media();
+        $collapser->setPreserveNewLines(true);
+
+        $test = 'blargh' . "\n" . 'blargh' . "\n\n\na";
+        $output = $collapser->collapse($test);
+
+        $expected = $test = 'blargh' . "\n" . 'blargh' . "\na";
+        $this->assertSame($expected, $output);
+    }
+
+    /**
+     * @throws \Exception On invalid input
+     */
+    public function testDontDeleteComments()
+    {
+        $collapser = new Media();
+        $collapser->setDeleteComments(false);
+
+        $test = '/* fun */';
+        $output = $collapser->collapse($test);
+
+        $this->assertSame($test, $output);
     }
 }

@@ -1,4 +1,8 @@
 <?php
+namespace SalernoLabs\Tests\Collapser;
+
+use SalernoLabs\Collapser\CSS;
+
 /**
  * Test cases for Media class
  *
@@ -6,8 +10,6 @@
  * @subpackage Collapser
  * @author Eric
  */
-namespace SalernoLabs\Tests\Collapser;
-
 class CSSTest extends \PHPUnit\Framework\TestCase
 {
     /**
@@ -16,10 +18,11 @@ class CSSTest extends \PHPUnit\Framework\TestCase
      * @param $input
      * @param $expected
      * @dataProvider dataProviderTestCollapse
+     * @throws \Exception But not in this test
      */
     public function testCollapse($input, $expected)
     {
-        $collapser = new \SalernoLabs\Collapser\CSS();
+        $collapser = new CSS();
         $collapser->setDeleteComments(true);
 
         $output = $collapser->collapse($input);

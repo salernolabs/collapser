@@ -1,0 +1,1 @@
+var t='lol ';var l=" you the man now dog";for(var x in stomach){var lol=true;}

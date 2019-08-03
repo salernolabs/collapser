@@ -1,4 +1,6 @@
 <?php
+namespace SalernoLabs\Collapser;
+
 /**
  * CSS Collapser class
  *
@@ -6,23 +8,19 @@
  * @package SalernoLabs
  * @subpackage Collapser
  */
-namespace SalernoLabs\Collapser;
-
 class CSS extends Media
 {
     /**
      * In rule or not
-     *
      * @var boolean
      */
     protected $inRule = false;
 
     /**
      * The start of a rule, colon character
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter58()
+    protected function handleCharacter58(): bool
     {
         $this->inRule = true;
 
@@ -31,10 +29,9 @@ class CSS extends Media
 
     /**
      * Handle semi-colon character, close out the rule
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter59()
+    protected function handleCharacter59(): bool
     {
         if (!$this->inSingleQuotes && !$this->inQuotes)
         {
@@ -46,20 +43,18 @@ class CSS extends Media
 
     /**
      * Handle } in case developer left off the semi-colon from the rule, close the rule out
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter125()
+    protected function handleCharacter125(): bool
     {
         return $this->handleCharacter59();
     }
 
     /**
      * Handle un-quoted spaces
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter32()
+    protected function handleCharacter32(): bool
     {
         if (!$this->inSingleQuotes && !$this->inQuotes)
         {

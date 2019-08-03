@@ -1,4 +1,6 @@
 <?php
+namespace SalernoLabs\Collapser;
+
 /**
  * Javascript Collapser class
  *
@@ -6,8 +8,6 @@
  * @package SalernoLabs
  * @subpackage Collapser
  */
-namespace SalernoLabs\Collapser;
-
 class Javascript extends Media
 {
     /**
@@ -45,10 +45,9 @@ class Javascript extends Media
 
     /**
      * The start of a condition, open parens
-     *
      * @return boolean
      */
-    protected function handleCharacter40()
+    protected function handleCharacter40(): bool
     {
         if (!$this->inSingleQuotes && !$this->inQuotes) {
             $this->inCondition = true;
@@ -59,10 +58,9 @@ class Javascript extends Media
 
     /**
      * Closing of a condition, close parens
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter41()
+    protected function handleCharacter41(): bool
     {
         if (!$this->inSingleQuotes && !$this->inQuotes) {
             $this->inCondition = false;
@@ -72,11 +70,9 @@ class Javascript extends Media
     }
 
     /**
-     * Handle javascript matches
-     *
-     * @see \Chorizo\Utilities\Collapser\Media::handleCharacter47()
+     * @inheritDoc
      */
-    protected function handleCharacter47()
+    protected function handleCharacter47(): bool
     {
         if ($this->inQuotes || $this->inSingleQuotes || $this->inCondition) return true;
 
@@ -85,10 +81,9 @@ class Javascript extends Media
 
     /**
      * Handle un-quoted spaces
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter32()
+    protected function handleCharacter32(): bool
     {
         $this->lastSpace = $this->currentIndex;
 
@@ -97,7 +92,8 @@ class Javascript extends Media
             return true;
         }
 
-        if ((chr($this->nextCharacter) . $this->input[$this->currentIndex + 2]) == 'in') {
+        // Special case for for in
+        if ((chr($this->nextCharacter) . $this->input[$this->currentIndex + 2]) === 'in') {
             return true;
         }
 

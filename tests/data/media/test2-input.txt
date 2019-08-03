@@ -1,0 +1,7 @@
+" hello "
+' ouch ' blargh
+/* blargh */
+    // lol
+
+a
+

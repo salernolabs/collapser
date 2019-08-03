@@ -1,4 +1,8 @@
 <?php
+namespace SalernoLabs\Tests\Collapser;
+
+use SalernoLabs\Collapser\Javascript;
+
 /**
  * Test cases for Media class
  *
@@ -6,21 +10,33 @@
  * @subpackage Collapser
  * @author Eric
  */
-namespace SalernoLabs\Tests\Collapser;
-
 class JavascriptTest extends \PHPUnit\Framework\TestCase
 {
     /**
+     * Ensure exception on empty input
+     * @throws \Exception On empty input
+     */
+    public function testEmptyInput()
+    {
+        $this->expectException(\Exception::class);
+        $collapser = new Javascript();
+        $collapser->collapse('');
+    }
+
+    /**
      * Test collapse of media
-     *
      * @param $input
      * @param $expected
      * @dataProvider dataProviderTestCollapse
+     * @throws \Exception But not in this test
      */
     public function testCollapse($input, $expected)
     {
-        $collapser = new \SalernoLabs\Collapser\Javascript();
-        $collapser->setDeleteComments(true);
+        $collapser = new Javascript();
+        $collapser
+            ->setDeleteComments(true)
+            ->setPreserveNewLines(false)
+            ->setDebugMode(false);
 
         $output = $collapser->collapse($input);
 

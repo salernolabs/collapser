@@ -1,4 +1,6 @@
 <?php
+namespace SalernoLabs\Collapser;
+
 /**
  * Generic Media Collapser
  *
@@ -6,114 +8,108 @@
  * @package SalernoLabs
  * @subpackage Collapser
  */
-namespace SalernoLabs\Collapser;
-
 class Media
 {
+    /** @var int  */
+    protected const CHAR_BACKSLASH = 92;
+    /** @var int  */
+    protected const CHAR_LINEFEED = 10;
+
     /**
      * Currently in quotes or not
-     *
      * @var boolean
      */
     protected $inQuotes = false;
 
     /**
      * Currently in single quotes or not
-     *
      * @var boolean
      */
     protected $inSingleQuotes = false;
 
     /**
      * Delete comments or not
-     *
      * @var boolean
      */
-    protected $deleteComments = false;
+    protected $deleteComments = true;
 
     /**
      * Skip next character
-     *
      * @var boolean
      */
     protected $skipNext = 0;
 
     /**
      * Current character
-     *
      * @var integer
      */
     protected $currentCharacter = 0;
 
     /**
      * Last added character
-     *
      * @var integer
      */
     protected $lastAdded = 0;
 
     /**
      * Protected next character
-     *
      * @var integer
      */
     protected $nextCharacter = 0;
 
     /**
      * Protected last character
-     *
      * @var integer
      */
     protected $lastCharacter = 0;
 
     /**
      * Current index
-     *
      * @var integer
      */
     protected $currentIndex = 0;
 
     /**
      * Preserve new lines
-     *
      * @var boolean
      */
     protected $preserveNewlines = false;
 
     /**
      * Compression amount
-     *
      * @var integer
      */
     protected $sizeSavings = 0;
 
     /**
      * Debug mode
-     *
      * @var boolean
      */
     protected $debug = false;
 
     /**
      * User entered input
-     *
      * @var string
      */
     protected $input;
 
     /**
      * Last word parsed
-     *
      * @var string
      */
     protected $lastWord = '';
 
     /**
      * Building space for last word
-     *
      * @var string
      */
     protected $buildingWord = '';
+
+    /**
+     * Skip text to input into the stream
+     * @var string
+     */
+    protected $addSkipText = '';
 
     /**
      * Should the collapser preserve new lines or not
@@ -156,11 +152,9 @@ class Media
 
     /**
      * Collapse (minify) media
-     *
-     * @param string $input
-     *
+     * @param string $input The input string to collapse
      * @return string
-     * @throws \Exception
+     * @throws \Exception When input is empty
      */
     public function collapse($input)
     {
@@ -176,7 +170,7 @@ class Media
         $initialSize = mb_strlen($input);
         $timeStart = microtime(true);
 
-        $this->input = str_replace(array("\r", "\t"), array('', ' '), trim($input));
+        $this->input = str_replace(["\r", "\t"], ['', ' '], trim($input));
         unset($input);
 
         if (empty($this->input))
@@ -198,8 +192,9 @@ class Media
             $this->currentIndex = $i;
             $character = mb_substr($this->input, $i, 1);
             $this->currentCharacter = ord($character);
-            $this->nextCharacter = ($this->currentIndex != $characterCount) ? ord(mb_substr($this->input, $i + 1, 1)) : false;
-            $this->lastCharacter = ($this->currentIndex != 0) ? ord(mb_substr($this->input, $i - 1, 1)) : false;
+            $this->nextCharacter =
+                ($this->currentIndex != $characterCount) ? ord(mb_substr($this->input, $i + 1, 1)) : false;
+            $this->lastCharacter = ($this->currentIndex !== 0) ? ord(mb_substr($this->input, $i - 1, 1)) : false;
 
             $methodName = 'handleCharacter' . $this->currentCharacter;
 
@@ -216,34 +211,38 @@ class Media
             {
                 $this->lastWord = $this->buildingWord;
                 $this->buildWord = '';
-                continue;
             }
             else if ($return === true)
             {
-                $output .= $character;
-                $this->lastAdded = $this->currentCharacter;
+                if (!empty($this->addSkipText)) {
+                    $output .= $this->addSkipText;
+                    $this->lastAdded = ord($output[mb_strlen($output) - 1]);
 
-                if (ctype_alpha($character)) {
-                    $this->buildingWord .= $character;
-                } else {
                     $this->lastWord = $this->buildingWord;
                     $this->buildingWord = '';
-                }
-            }
-            else if (is_string($return))
-            {
-                $output .= $return;
-                $this->lastAdded = ord($output[mb_strlen($output) - 1]);
+                    $this->addSkipText = '';
+                } else {
+                    $output .= $character;
+                    $this->lastAdded = $this->currentCharacter;
 
-                $this->lastWord = $this->buildingWord;
-                $this->buildingWord = '';
+                    if (ctype_alpha($character)) {
+                        $this->buildingWord .= $character;
+                    } else {
+                        $this->lastWord = $this->buildingWord;
+                        $this->buildingWord = '';
+                    }
+                }
             }
         }
 
         $this->sizeSavings = ($initialSize - mb_strlen($output));
 
         if ($this->debug) {
-            $output .= "\n" . '/* culled ' . number_format($this->sizeSavings) . ' chars in ' . number_format((microtime(true) - $timeStart) * 1000, 2) . 'ms */';
+            $output .= sprintf(
+                PHP_EOL . '/* culled %s chars in %sms */',
+                number_format($this->sizeSavings),
+                number_format((microtime(true) - $timeStart) * 1000, 2)
+            );
         }
 
         return $output;
@@ -251,15 +250,15 @@ class Media
 
     /**
      * Handle comments
-     *
-     * @return boolean
+     * @return bool
+     * @throws \Exception On messed up comments
      */
-    protected function handleCharacter47()
+    protected function handleCharacter47(): bool
     {
         if ($this->inQuotes || $this->inSingleQuotes) return true;
 
         //We're in a // style comment, delete it regardless
-        if ($this->nextCharacter == 47)
+        if ($this->nextCharacter === 47)
         {
             $nextNewLine = mb_strpos($this->input, "\n", $this->currentIndex);
             if ($nextNewLine === false)
@@ -272,21 +271,23 @@ class Media
 
             $this->skipNext = mb_strlen($comment);
             return false;
-        } 
-        else if ($this->nextCharacter == 42) 
+        }
+        // Character 42 is an asterisk *
+        else if ($this->nextCharacter === 42)
         {
-            $nextClosing = mb_strpos($this->input, "*/", $this->currentIndex);
+            $nextClosing = mb_strpos($this->input, '*/', $this->currentIndex);
 
             if ($nextClosing === false) {
                 throw new \Exception("Unclosed comment in media near index " . $this->currentIndex);
             }
 
-            $comment = mb_substr($this->input, $this->currentIndex, $nextClosing + 1);
+            $comment = mb_substr($this->input, $this->currentIndex, $nextClosing - $this->currentIndex + 2);
 
             $this->skipNext = mb_strlen($comment);
 
-            if (!$this->deleteComments) {
-                return $comment;
+            if ($this->deleteComments === false) {
+                $this->addSkipText = $comment;
+                return true;
             }
 
             return false;
@@ -298,12 +299,12 @@ class Media
     /**
      * Handle unescaped double quotes
      *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter34()
+    protected function handleCharacter34(): bool
     {
         //Unescaped double quote
-        if (!$this->inSingleQuotes && $this->lastCharacter != 92) {
+        if (!$this->inSingleQuotes && $this->lastCharacter !== self::CHAR_BACKSLASH) {
             $this->inQuotes = !$this->inQuotes;
         }
 
@@ -313,11 +314,11 @@ class Media
     /**
      * Handle unescaped single quotes
      *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter39()
+    protected function handleCharacter39(): bool
     {
-        if (!$this->inQuotes && $this->lastCharacter != 92) {
+        if (!$this->inQuotes && $this->lastCharacter !== self::CHAR_BACKSLASH) {
             $this->inSingleQuotes = !$this->inSingleQuotes;
         }
 
@@ -327,44 +328,44 @@ class Media
     /**
      * Handle un-quoted spaces
      *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter32()
+    protected function handleCharacter32(): bool
     {
-        if (!$this->inQuotes) {
-            return false;
+        if ($this->inQuotes) {
+            return true;
         }
 
-        if (!$this->inSingleQuotes) {
-            return false;
+        if ($this->inSingleQuotes) {
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
      * Handle new lines
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter10()
+    protected function handleCharacter10(): bool
     {
         if (!$this->preserveNewlines) {
             return false;
         }
 
         //If the last added character was a new line, skip it. We still want to condense newlines.
-        if ($this->lastAdded == 10) return false;
+        if ($this->lastAdded === self::CHAR_LINEFEED) {
+            return false;
+        }
 
         return true;
     }
 
     /**
      * Default handler for a character
-     *
-     * @return boolean
+     * @return bool
      */
-    protected function handleCharacter()
+    protected function handleCharacter(): bool
     {
         return true;
     }
